@@ -11,6 +11,7 @@ class WildberriesSettings(BaseModel):
     request_timeout: int = 10
     batch_size: int = 10
     check_every_minutes: int = 30
+    reviews_max_age_days: int = 90
 
 
 class LLMRuntimeSettings(BaseModel):

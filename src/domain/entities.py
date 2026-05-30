@@ -22,5 +22,10 @@ class LLMResponse(BaseModel):
 
     @classmethod
     def from_response(cls, response: object) -> "LLMResponse":
-        raw_text = getattr(response, "output_text", None)
-        return cls(text=str(raw_text).strip())
+        # Chat Completions API: choices[0].message.content
+        if hasattr(response, "choices") and response.choices:
+            raw_text = response.choices[0].message.content
+        # Responses API (fallback): output_text
+        else:
+            raw_text = getattr(response, "output_text", "")
+        return cls(text=str(raw_text or "").strip())

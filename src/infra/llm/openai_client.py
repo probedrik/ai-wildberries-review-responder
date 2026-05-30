@@ -32,12 +32,14 @@ class OpenAIClient(LLMClient):
         return OpenAI(api_key=self.config.api_key, base_url=base_url, timeout=self.timeout)
 
     def generate_reply(self, prompt: str) -> str:
-        response = self._client().responses.create(
+        response = self._client().chat.completions.create(
             model=self.config.model,
             temperature=self.temperature,
-            max_output_tokens=self.max_tokens,
-            input=prompt,
-            instructions=self.instructions,
+            max_tokens=self.max_tokens,
+            messages=[
+                {"role": "system", "content": self.instructions},
+                {"role": "user", "content": prompt},
+            ],
         )
         model = LLMResponse.from_response(response)
         return model.text

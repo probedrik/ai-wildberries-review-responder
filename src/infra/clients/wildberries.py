@@ -28,6 +28,11 @@ class WildberriesClient:
         return communications.ApiClient(configuration=config)
 
     def fetch_reviews(self) -> List[Review]:
+        from datetime import datetime, timezone, timedelta
+
+        max_age = self._config.reviews_max_age_days
+        cutoff = datetime.now(timezone.utc) - timedelta(days=max_age)
+
         response: ApiV1FeedbacksGet200Response = self._api.api_v1_feedbacks_get(
             is_answered=False,
             take=self.batch_size,
@@ -37,7 +42,17 @@ class WildberriesClient:
         reviews: List[Review] = []
         for item in response.data.feedbacks:  # type: ignore[union-attr]
             payload = item.model_dump(by_alias=True, exclude_none=True)
-            reviews.append(WildberriesReview(**payload).to_review())
+            wb_review = WildberriesReview(**payload)
+
+            # Filter by age: skip reviews older than max_age_days
+            if wb_review.created_date and wb_review.created_date < cutoff:
+                continue
+
+            # Skip reviews with no text
+            if not wb_review.summary.strip():
+                continue
+
+            reviews.append(wb_review.to_review())
         return reviews
 
     def publish_reply(self, review_id: str, message: str) -> None:
