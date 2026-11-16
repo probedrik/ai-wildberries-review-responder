@@ -12,6 +12,9 @@ class WildberriesSettings(BaseModel):
     batch_size: int = 10
     check_every_minutes: int = 30
     reviews_max_age_days: int = 90
+    # Wildberries режет TCP с этого сервера, поэтому API доступен только через туннель
+    # на mpdrf: http://127.0.0.1:3129 (HTTP) или socks5h://127.0.0.1:1080.
+    proxy: str = ""
 
 
 class LLMRuntimeSettings(BaseModel):
@@ -23,6 +26,22 @@ class LLMRuntimeSettings(BaseModel):
     instructions: str = "You are a polite support agent replying to Wildberries reviews."
     timeout: int = 10
     prompt_template: str = "Reply to the Wildberries review in a polite and concise tone."
+
+    # Extra fields merged into the chat-completions request body verbatim.
+    # Required for 100milionseek: without {"reasoning_effort": "none"} the model burns the
+    # whole token budget on reasoning and returns an empty `content`.
+    extra_body: dict = Field(default_factory=dict)
+
+    # Optional second OpenAI-compatible provider, tried when the primary answer is empty
+    # or fails the quality gate (too short / JSON garbage / model refusal boilerplate).
+    fallback_base_url: str = ""
+    fallback_api_key: str = ""
+    fallback_model: str = ""
+    fallback_extra_body: dict = Field(default_factory=dict)
+
+    # Wildberries rejects replies outside this range; the application layer skips such replies.
+    min_reply_length: int = 20
+    max_reply_length: int = 1000
 
 
 class Settings(BaseSettings):

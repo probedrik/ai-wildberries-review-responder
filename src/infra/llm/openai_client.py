@@ -32,6 +32,9 @@ class OpenAIClient(LLMClient):
         return OpenAI(api_key=self.config.api_key, base_url=base_url, timeout=self.timeout)
 
     def generate_reply(self, prompt: str) -> str:
+        kwargs = {}
+        if self.config.extra_body:
+            kwargs["extra_body"] = dict(self.config.extra_body)
         response = self._client().chat.completions.create(
             model=self.config.model,
             temperature=self.temperature,
@@ -40,6 +43,7 @@ class OpenAIClient(LLMClient):
                 {"role": "system", "content": self.instructions},
                 {"role": "user", "content": prompt},
             ],
+            **kwargs,
         )
         model = LLMResponse.from_response(response)
         return model.text

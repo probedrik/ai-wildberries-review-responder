@@ -131,6 +131,11 @@ def run_http_server(handler_cls) -> Iterator[str]:
 
 
 def test_e2e_flow_with_fake_wildberries_and_llm_endpoints():
+    from datetime import datetime, timedelta, timezone
+
+    # Свежая дата: отзывы старше reviews_max_age_days (90) отсекаются, и фиксированная
+    # дата в прошлом роняла тест по мере старения календаря.
+    fresh_date = (datetime.now(timezone.utc) - timedelta(days=3)).strftime("%Y-%m-%dT%H:%M:%SZ")
     review_payload = {
         "id": "wb-1",
         "productId": "SKU-1",
@@ -139,7 +144,7 @@ def test_e2e_flow_with_fake_wildberries_and_llm_endpoints():
         "text": "Сумка отличная, спасибо!",
         "pros": "Быстрая доставка",
         "cons": "",
-        "createdDate": "2024-08-01T12:00:00Z",
+        "createdDate": fresh_date,
     }
     wb_state = FakeWBState(reviews=[review_payload])
     llm_state = FakeLLMState(reply_text="Благодарим за отзыв и рады, что всё понравилось!")
